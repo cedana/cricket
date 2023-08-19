@@ -21,31 +21,23 @@ libtirpc/install:
 	$(MAKE) -C libtirpc install
 
 cuda-gdb:
-ifeq (,$(wildcard ./cuda-gdb-src.rpm))
-	@echo -e "\033[36m----> downloading cuda-gdb 11.1\033[0m"
-	wget https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-gdb-src-11-1-11.1.105-1.x86_64.rpm -O cuda-gdb-src.rpm
-else
-		@echo -e "\033[36m----> cuda-gdb 11.1 already present. Skipping download.\033[0m"
-endif
 ifeq (,$(wildcard ./cuda-gdb))
-	@echo -e "\033[36m----> extracting cuda-gdb\033[0m"
-	mkdir -p cuda-gdb
-	rpm2cpio ./cuda-gdb-src.rpm | cpio -i --to-stdout ./usr/local/cuda-11.1/extras/cuda-gdb-11.1.105.src.tar.gz | tar zxf - -C cuda-gdb --strip-components=1
+    @echo -e "\033[36m----> Cloning cuda-gdb repository\033[0m"
+    git clone https://github.com/NVIDIA/cuda-gdb.git cuda-gdb
 else
-	@echo -e "\033[36m----> cuda-gdb directory present. Skipping extracting cuda-gdb\033[0m"
+    @echo -e "\033[36m----> cuda-gdb directory already present. Skipping cloning.\033[0m"
 endif
 
 cuda-gdb/build:
 ifeq (,$(wildcard ./cuda-gdb/build))
-	@echo -e "\033[36m----> Configuring cuda-gdb\033[0m"
-	@echo -e "\033[36m----> extracting cuda-gdb\033[0m"
-	mkdir -p cuda-gdb/build && cd cuda-gdb/build && \
-		../configure --disable-werror --program-prefix=cuda- --enable-cuda --with-python=no --enable-targets="x86_64-apple-darwin,x86_64-unknown-linux-gnu,arm-elf-linux-gnu,m68k-unknown-linux-gnu" CFLAGS='-I/usr/local/cuda/include -fPIC' LDFLAGS='-lpthread'
-	@echo -e "\033[36m----> Building cuda-gdb\033[0m"
-	CPATH=/usr/local/cuda/include $(MAKE) -C cuda-gdb/build
-	CPATH=/usr/local/cuda/include $(MAKE) -C cuda-gdb/build/gdb libgdb.a
+    @echo -e "\033[36m----> Configuring cuda-gdb\033[0m"
+    mkdir -p cuda-gdb/build && cd cuda-gdb/build && \
+        ../configure --disable-werror --program-prefix=cuda- --enable-cuda --with-python=no --enable-targets="x86_64-apple-darwin,x86_64-unknown-linux-gnu,arm-elf-linux-gnu,m68k-unknown-linux-gnu" CFLAGS='-I/usr/local/cuda/include -fPIC' LDFLAGS='-lpthread'
+    @echo -e "\033[36m----> Building cuda-gdb\033[0m"
+    CPATH=/usr/local/cuda/include $(MAKE) -C cuda-gdb/build
+    CPATH=/usr/local/cuda/include $(MAKE) -C cuda-gdb/build/gdb libgdb.a
 else
-	@echo -e "\033[36m----> cuda-gdb/build directory present. Skipping building of cuda-gdb\033[0m"
+    @echo -e "\033[36m----> cuda-gdb/build directory already present. Skipping building of cuda-gdb\033[0m"
 endif
 
 lib:
